@@ -104,7 +104,7 @@ function movetosplunkDB {
     echo "Starting local rsync to splunkdb path. " | tee -a $LogFile
     echo " SRC : $SplunkBucketImportPath    DST : $SplunkDBPath." | tee -a $LogFile
     echo " using : rsync --ignore-existing --update --dry-run $SplunkBucketImportPath $SplunkDBPath"
-    $RSYNC -rvPS --update $SplunkBucketImportPath $SplunkDBPath | tee -a $LogFile
+    $RSYNC -rvPS --update $SplunkBucketImportPath $SplunkDBPath 2>1& | tee -a $LogFile
     echo ".... rsync finished. " | tee -a $LogFile
     break
 }
