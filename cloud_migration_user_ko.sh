@@ -7,6 +7,8 @@ SPLUNK_HOME=/opt/splunk
 KO_HOME=/tmp/migrated_user_ko
 LOOKUPS_HOME=$KO_HOME/lookups
 DATE=`date`
+AWKcmd=`which awk`
+SEDcmd=`which sed`
 
 echo "Making Migration App in $KO_HOME"
 mkdir -p $KO_HOME/{appserver,local,lookups,default,metadata}/ >/dev/null 2>&1
@@ -71,6 +73,10 @@ do
     echo "# " >> "$KO_HOME/local/savedsearches.conf"
     cat "${dir}" >> "$KO_HOME/local/savedsearches.conf"
     echo "## ${dir} <br>" >> "$KO_HOME/migrated.txt"
+    # Need to delete any disabled = flags and disable all saved searches...
+    $SEDcmd -e '/^disabled /{N;d;}'  $KO_HOME/local/savedsearches.conf > $KO_HOME/local/temp.conf
+    $AWKcmd '/^\[([^\]]+)\]/ { print;print "disabled = 1";next }1' $KO_HOME/local/temp.conf > $KO_HOME/local/savedsearches.conf
+    rm $KO_HOME/local/temp.conf
 done
 
 echo "Copying Users Eventtypes"
