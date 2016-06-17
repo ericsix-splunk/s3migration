@@ -130,4 +130,4 @@ echo " "
 ####    Create tarball of app
 echo " "
 echo "... Creating archive ... "
-tar -C /tmp -cvf migrated_user_ko.tgz migrated_user_ko
+tar -C /tmp -cvfz migrated_user_ko.tgz migrated_user_ko

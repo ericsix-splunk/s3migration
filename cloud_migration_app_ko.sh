@@ -12,15 +12,32 @@ SEDcmd=`which sed`
 
 echo "Making Migration App in $KO_HOME"
 mkdir -p $KO_HOME/{local,lookups,default,metadata}/ >/dev/null 2>&1
-mkdir -p $KO_HOME/local/data/ui/views/ > /dev/null 2>&1
+mkdir -p $KO_HOME/appserver/static/html > /dev/null 2>&1
+mkdir -p $KO_HOME/local/data/ui/{nav,views}/ > /dev/null 2>&1
+
 # create a local meta to change ownership
-printf '%s\n%s\n%s\n%s\n%s\n' '#default for everyone to read contents of this app' '# export all objects to system' '[]' 'access = read : [ * ], write : [ sc_admin, admin]' 'export = system' > $KO_HOME/metadata/local.meta
+printf '%s\n%s\n%s\n%s\n%s\n' '#default for everyone to read contents of this app' '# export all objects to system' '[]' 'access = read : [ * ], write : [ sc_admin, admin]' 'export = system' > $KO_HOME/metadat
+a/local.meta
 # create app.conf
-printf '%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n' '##########################' '# Migrated Knowledge Objects APP' '# Change the build to date implemented' '######################' ' ' '[install]' 'is_configured = true' 'state = enabled' 'build = DATE' ' ' '[ui]' 'is_visible = true' 'label = CA - Migrated Knowledge Objects' ' ' '[launcher]' 'author = Splunk Cloud' ' version = 1.0' 'description = Migrated Knowledge Objects from Splunk Cloud Instance APPS' ' ' '[package]' 'id = migrated_app_ko' > $KO_HOME/default/app.conf
+printf '%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n' '##########################' '# Migrated Knowledge Objects APP' '# Change the build to date implemented' '#####
+#################' ' ' '[install]' 'is_configured = true' 'state = enabled' 'build = DATE' ' ' '[ui]' 'is_visible = true' 'label = CA - Migrated Knowledge Objects' ' ' '[launcher]' 'author = Splunk Cloud' ' ve
+rsion = 1.0' 'description = Migrated Knowledge Objects from Splunk Cloud Instance APPS' ' ' '[package]' 'id = migrated_app_ko' > $KO_HOME/default/app.conf
 
 # Log file
 printf '%s\n%s\n%s\n' '##### Migration Log File' '## Migration of APP Local configurations' '### Files Migrated ####' > $KO_HOME/migrated.txt
- 
+
+# create migration view
+printf '%s\n' '<dashboard>' > $KO_HOME/local/data/ui/views/migrated_objects.xml
+printf '%s\n' '<label>Migrated App Objects</label><description>Migrated App Objects</description><row>' >> $KO_HOME/local/data/ui/views/migrated_objects.xml
+printf '%s\n' '<html src="html/migrated.html"></html></row></dashboard>' >> $KO_HOME/local/data/ui/views/migrated_objects.xml
+
+# create navigation view
+printf '%s\n' '<nav  color="#2175d9">' > $KO_HOME/local/data/ui/nav/default.xml
+printf '%s\n' '<view name="migrated_objects" default="true"/>' >> $KO_HOME/local/data/ui/nav/default.xml
+printf '%s\n' '<view name="search" />' >> $KO_HOME/local/data/ui/nav/default.xml
+printf '%s\n' '<view name="dashboards" />' >> $KO_HOME/local/data/ui/nav/default.xml
+printf '%s\n' '</nav>' >> $KO_HOME/local/data/ui/nav/default.xml
+
 # start the real work
 echo $DATE ----
 echo $SPLUNK_HOME
@@ -57,7 +74,7 @@ do
     echo "# ${dir}" >> "$KO_HOME/local/savedsearches.conf"
     echo "# " >> "$KO_HOME/local/savedsearches.conf"
     cat "${dir}" >> "$KO_HOME/local/savedsearches.conf"
-    echo "## ${dir}" >> "$KO_HOME/migrated.txt" 
+    echo "## ${dir}" >> "$KO_HOME/migrated.txt"
     # Need to delete any disabled = flags and disable all saved searches...
     $SEDcmd -e '/^disabled /{N;d;}'  $KO_HOME/local/savedsearches.conf > $KO_HOME/local/temp.conf
     $AWKcmd '/^\[([^\]]+)\]/ { print;print "disabled = 1";next }1' $KO_HOME/local/temp.conf > $KO_HOME/local/savedsearches.conf
@@ -70,7 +87,7 @@ do
     echo "# " >> "$KO_HOME/local/eventtypes.conf"
     echo "# ${dir}" >> "$KO_HOME/local/eventtypes.conf"
     echo "# " >> "$KO_HOME/local/eventtypes.conf"
-    cat "${dir}" >> "$KO_HOME/local/eventtypes.conf"	
+    cat "${dir}" >> "$KO_HOME/local/eventtypes.conf"
     echo "## ${dir}" >> "$KO_HOME/migrated.txt"
 done
 
@@ -92,5 +109,8 @@ done
 #    echo "## ${dir}" >> "$KO_HOME/migrated.txt"
 #done
 
+# Copy log to dashboard view
+cp $KO_HOME/migrated.txt $KO_HOME/appserver/static/html/migrated.html
+
 ####    Create tarball of app
-tar -C /tmp -cvf migrated_ko.tgz migrated_app_ko
+tar -C /tmp -cvfz migrated_ko.tgz migrated_app_ko
